@@ -1,0 +1,354 @@
+{
+  "version": "0.1.0",
+  "lang": "en",
+  "period": {
+    "first": "2026-01-01",
+    "last": "2026-01-02",
+    "days": 0.3
+  },
+  "hardware": {
+    "cpu_name": "Demo baseline (synthetic)",
+    "cores": 4,
+    "threads": 8,
+    "ram_gb": 16.0,
+    "disk_class": "sata",
+    "os_name": "Synthetic example"
+  },
+  "baseline": {
+    "name": "Demo baseline (synthetic)",
+    "gb6_single": 1500,
+    "gb6_multi": 6000,
+    "note": "Fictional scores for illustration only",
+    "source": "manual",
+    "uncertainty": 1.0
+  },
+  "disk": {
+    "current": "sata",
+    "target": "nvme",
+    "ratio": 1.291
+  },
+  "settings": {
+    "cap_s": 300.0,
+    "max_stall_s": 300.0,
+    "max_human_s": 1800.0,
+    "skipped_files": 0,
+    "compressed_unread": 0
+  },
+  "agents": {
+    "claude": {
+      "sessions": 8,
+      "model_s": 960.0,
+      "tool_s": 710.0,
+      "human_s": 0.0,
+      "idle_s": 0.0,
+      "background_s": 0.0,
+      "stalled_s": 0.0,
+      "categories": [
+        {
+          "category": "build_compile",
+          "count": 2,
+          "seconds": 360.0,
+          "excess_seconds": 0.0,
+          "median_s": 180.0,
+          "p90_s": 180.0,
+          "max_s": 180.0
+        },
+        {
+          "category": "test",
+          "count": 2,
+          "seconds": 180.0,
+          "excess_seconds": 0.0,
+          "median_s": 90.0,
+          "p90_s": 90.0,
+          "max_s": 90.0
+        },
+        {
+          "category": "dependency_install",
+          "count": 2,
+          "seconds": 160.0,
+          "excess_seconds": 0.0,
+          "median_s": 80.0,
+          "p90_s": 80.0,
+          "max_s": 80.0
+        },
+        {
+          "category": "vcs_local",
+          "count": 2,
+          "seconds": 10.0,
+          "excess_seconds": 0.0,
+          "median_s": 5.0,
+          "p90_s": 5.0,
+          "max_s": 5.0
+        }
+      ],
+      "families": [
+        [
+          "cargo",
+          360.0
+        ],
+        [
+          "pytest",
+          180.0
+        ],
+        [
+          "npm",
+          160.0
+        ],
+        [
+          "git",
+          10.0
+        ]
+      ]
+    },
+    "codex": {
+      "sessions": 8,
+      "model_s": 960.0,
+      "tool_s": 710.0,
+      "human_s": 0.0,
+      "idle_s": 0.0,
+      "background_s": 0.0,
+      "stalled_s": 0.0,
+      "categories": [
+        {
+          "category": "build_compile",
+          "count": 2,
+          "seconds": 360.0,
+          "excess_seconds": 0.0,
+          "median_s": 180.0,
+          "p90_s": 180.0,
+          "max_s": 180.0
+        },
+        {
+          "category": "test",
+          "count": 2,
+          "seconds": 180.0,
+          "excess_seconds": 0.0,
+          "median_s": 90.0,
+          "p90_s": 90.0,
+          "max_s": 90.0
+        },
+        {
+          "category": "dependency_install",
+          "count": 2,
+          "seconds": 160.0,
+          "excess_seconds": 0.0,
+          "median_s": 80.0,
+          "p90_s": 80.0,
+          "max_s": 80.0
+        },
+        {
+          "category": "vcs_local",
+          "count": 2,
+          "seconds": 10.0,
+          "excess_seconds": 0.0,
+          "median_s": 5.0,
+          "p90_s": 5.0,
+          "max_s": 5.0
+        }
+      ],
+      "families": [
+        [
+          "cargo",
+          360.0
+        ],
+        [
+          "pytest",
+          180.0
+        ],
+        [
+          "npm",
+          160.0
+        ],
+        [
+          "git",
+          10.0
+        ]
+      ]
+    },
+    "all": {
+      "sessions": 16,
+      "model_s": 1920.0,
+      "tool_s": 1420.0,
+      "human_s": 0.0,
+      "idle_s": 0.0,
+      "background_s": 0.0,
+      "stalled_s": 0.0,
+      "categories": [
+        {
+          "category": "build_compile",
+          "count": 4,
+          "seconds": 720.0,
+          "excess_seconds": 0.0,
+          "median_s": 180.0,
+          "p90_s": 180.0,
+          "max_s": 180.0
+        },
+        {
+          "category": "test",
+          "count": 4,
+          "seconds": 360.0,
+          "excess_seconds": 0.0,
+          "median_s": 90.0,
+          "p90_s": 90.0,
+          "max_s": 90.0
+        },
+        {
+          "category": "dependency_install",
+          "count": 4,
+          "seconds": 320.0,
+          "excess_seconds": 0.0,
+          "median_s": 80.0,
+          "p90_s": 80.0,
+          "max_s": 80.0
+        },
+        {
+          "category": "vcs_local",
+          "count": 4,
+          "seconds": 20.0,
+          "excess_seconds": 0.0,
+          "median_s": 5.0,
+          "p90_s": 5.0,
+          "max_s": 5.0
+        }
+      ],
+      "families": [
+        [
+          "cargo",
+          720.0
+        ],
+        [
+          "pytest",
+          360.0
+        ],
+        [
+          "npm",
+          320.0
+        ],
+        [
+          "git",
+          20.0
+        ]
+      ]
+    }
+  },
+  "sensitive_expected_s": 1009.2,
+  "targets": [
+    {
+      "name": "Demo target (synthetic)",
+      "tier_id": "custom",
+      "tier": "Custom",
+      "gb6_single": 3000,
+      "gb6_multi": 15000,
+      "cpu_x_single": 2.0,
+      "cpu_x_multi": 2.5,
+      "scenarios": {
+        "conservative": {
+          "tool_old_s": 1420.0,
+          "tool_new_s": 1077.6,
+          "tool_speedup": 1.318,
+          "total_old_s": 3340.0,
+          "total_new_s": 2997.6,
+          "total_speedup": 1.114,
+          "saved_s": 342.4,
+          "per_category": {
+            "build_compile": {
+              "old_s": 720.0,
+              "new_s": 493.9
+            },
+            "test": {
+              "old_s": 360.0,
+              "new_s": 269.6
+            },
+            "dependency_install": {
+              "old_s": 320.0,
+              "new_s": 295.8
+            },
+            "vcs_local": {
+              "old_s": 20.0,
+              "new_s": 18.3
+            }
+          }
+        },
+        "expected": {
+          "tool_old_s": 1420.0,
+          "tool_new_s": 908.7,
+          "tool_speedup": 1.563,
+          "total_old_s": 3340.0,
+          "total_new_s": 2828.7,
+          "total_speedup": 1.181,
+          "saved_s": 511.3,
+          "per_category": {
+            "build_compile": {
+              "old_s": 720.0,
+              "new_s": 404.8
+            },
+            "test": {
+              "old_s": 360.0,
+              "new_s": 225.3
+            },
+            "dependency_install": {
+              "old_s": 320.0,
+              "new_s": 263.0
+            },
+            "vcs_local": {
+              "old_s": 20.0,
+              "new_s": 15.6
+            }
+          }
+        },
+        "optimistic": {
+          "tool_old_s": 1420.0,
+          "tool_new_s": 774.6,
+          "tool_speedup": 1.833,
+          "total_old_s": 3340.0,
+          "total_new_s": 2694.6,
+          "total_speedup": 1.24,
+          "saved_s": 645.4,
+          "per_category": {
+            "build_compile": {
+              "old_s": 720.0,
+              "new_s": 351.3
+            },
+            "test": {
+              "old_s": 360.0,
+              "new_s": 180.2
+            },
+            "dependency_install": {
+              "old_s": 320.0,
+              "new_s": 230.2
+            },
+            "vcs_local": {
+              "old_s": 20.0,
+              "new_s": 12.9
+            }
+          }
+        }
+      }
+    }
+  ],
+  "primary": 0,
+  "cat_names": {
+    "test": "Tests",
+    "build_compile": "Build, compile, lint",
+    "dependency_install": "Dependency install",
+    "script_runtime": "Scripts and runtimes",
+    "vcs_local": "Git (local)",
+    "file_search_read": "File read, search, edit",
+    "system_query": "System queries",
+    "container_vm": "Containers and VMs",
+    "other_tool": "Other tools",
+    "network": "Network and cloud CLIs",
+    "dev_server": "Dev servers",
+    "wait": "Deliberate waiting"
+  },
+  "notes": [
+    "SYNTHETIC EXAMPLE: all timings, hardware and scores are fictional. This is not a measured result or a real user's history.",
+    "Model time is treated as fixed: it is spent on remote servers, so a faster computer does not change it.",
+    "End to end = agent working time only (model time plus local tool time). Your own reply time is excluded.",
+    "How much of each command category speeds up with CPU and disk is set from experience, not measured. The conservative, expected and optimistic cases use different shares, so read the range.",
+    "Scores are compared across x86 and Apple Silicon chips. Real build and test times also depend on compiler, OS, memory bandwidth and cooling, so read the range, not the midpoint.",
+    "If you approve commands by hand, the wait for your approval is counted as tool time. The per-command cap limits how much of it can inflate the estimate.",
+    "Only 56m of agent working time was found. Treat the numbers as rough."
+  ],
+  "demo": true
+}

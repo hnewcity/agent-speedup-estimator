@@ -1,0 +1,134 @@
+{
+  "scale": "Geekbench 6 CPU, reference values from linked public pages; not official benchmark averages",
+  "as_of": "2026-10-30",
+  "cpus": [
+    {
+      "name": "Intel Core i5-8250U",
+      "aliases": ["i5-8250u", "8250u", "core i5-8250u", "intel core i5-8250u"],
+      "class": "laptop-lowpower",
+      "gb6_single": 1127,
+      "gb6_multi": 3311,
+      "source_url": "https://www.cpu-monkey.com/en/compare_cpu-intel_core_i5_8250u-vs-intel_core_i3_l13g4"
+    },
+    {
+      "name": "Intel Core i5-1135G7",
+      "aliases": ["i5-1135g7", "1135g7", "core i5-1135g7", "intel core i5-1135g7"],
+      "class": "laptop-lowpower",
+      "gb6_single": 1692,
+      "gb6_multi": 5373,
+      "source_url": "https://www.cpu-monkey.com/en/compare_cpu-intel_core_i5_1135g7-vs-apple_m5"
+    },
+    {
+      "name": "Intel Core i5-1235U",
+      "aliases": ["i5-1235u", "1235u", "core i5-1235u", "intel core i5-1235u"],
+      "class": "laptop-lowpower",
+      "gb6_single": 2089,
+      "gb6_multi": 6454,
+      "source_url": "https://www.cpu-monkey.com/en/compare_cpu-intel_core_i5_1135g7-vs-intel_core_i5_1235u"
+    },
+    {
+      "name": "Intel Core Ultra 7 155H",
+      "aliases": ["core ultra 7 155h", "ultra 7 155h", "155h", "intel core ultra 7 155h"],
+      "class": "laptop-performance",
+      "gb6_single": 2407,
+      "gb6_multi": 12410,
+      "source_url": "https://www.cpu-monkey.com/en/compare_cpu-intel_core_ultra_7_155h-vs-intel_core_ultra_7_255h"
+    },
+    {
+      "name": "Intel Core Ultra 7 255H",
+      "aliases": ["core ultra 7 255h", "ultra 7 255h", "255h", "intel core ultra 7 255h"],
+      "class": "laptop-performance",
+      "gb6_single": 2761,
+      "gb6_multi": 14339,
+      "source_url": "https://www.cpu-monkey.com/en/compare_cpu-intel_core_ultra_7_155h-vs-intel_core_ultra_7_255h"
+    },
+    {
+      "name": "Intel Core Ultra 9 285H",
+      "aliases": ["core ultra 9 285h", "ultra 9 285h", "285h", "intel core ultra 9 285h"],
+      "class": "laptop-performance",
+      "gb6_single": 3002,
+      "gb6_multi": 17572,
+      "source_url": "https://www.cpu-monkey.com/en/compare_cpu-amd_ryzen_ai_9_hx_370-vs-intel_core_ultra_9_285h"
+    },
+    {
+      "name": "AMD Ryzen AI 9 HX 370",
+      "aliases": ["ryzen ai 9 hx 370", "ai 9 hx 370", "hx 370", "amd ryzen ai 9 hx 370"],
+      "class": "laptop-performance",
+      "gb6_single": 2914,
+      "gb6_multi": 15044,
+      "source_url": "https://www.cpu-monkey.com/en/compare_cpu-amd_ryzen_ai_9_hx_370-vs-intel_core_ultra_9_285h"
+    },
+    {
+      "name": "Apple M1",
+      "aliases": ["apple m1", "m1"],
+      "class": "apple-laptop",
+      "gb6_single": 2163,
+      "gb6_multi": 8217,
+      "source_url": "https://browser.geekbench.com/macs/macbook-air-late-2020/"
+    },
+    {
+      "name": "Apple M4",
+      "aliases": ["apple m4", "m4"],
+      "class": "apple-laptop",
+      "gb6_single": 3207,
+      "gb6_multi": 15063,
+      "source_url": "https://browser.geekbench.com/macs/macbook-air-13-inch-2025-10c-cpu-10c-gpu"
+    },
+    {
+      "name": "Apple M4 Pro",
+      "aliases": ["apple m4 pro", "m4 pro"],
+      "class": "apple-laptop",
+      "gb6_single": 3377,
+      "gb6_multi": 24895,
+      "source_url": "https://browser.geekbench.com/macs/macbook-pro-16-inch-2024-14c-cpu-20c-gpu"
+    },
+    {
+      "name": "Apple M4 Max",
+      "aliases": ["apple m4 max", "m4 max"],
+      "class": "apple-laptop",
+      "gb6_single": 3342,
+      "gb6_multi": 25375,
+      "source_url": "https://browser.geekbench.com/macs/macbook-pro-14-inch-2024-14c-cpu-32c-gpu"
+    },
+    {
+      "name": "Apple M5",
+      "aliases": ["apple m5", "m5"],
+      "class": "apple-laptop",
+      "gb6_single": 3643,
+      "gb6_multi": 17959,
+      "source_url": "https://browser.geekbench.com/macs/macbook-pro-14-inch-2025"
+    },
+    {
+      "name": "Apple M5 Max",
+      "aliases": ["apple m5 max", "m5 max"],
+      "class": "apple-laptop",
+      "gb6_single": 3726,
+      "gb6_multi": 35046,
+      "source_url": "https://browser.geekbench.com/macs/macbook-pro-16-inch-2026-18c-cpu-40c-gpu"
+    },
+    {
+      "name": "AMD Ryzen 9 9950X",
+      "aliases": ["ryzen 9 9950x", "9950x", "amd ryzen 9 9950x"],
+      "class": "desktop",
+      "gb6_single": 3410,
+      "gb6_multi": 22430,
+      "source_url": "https://www.cpu-monkey.com/en/compare_cpu-amd_ryzen_9_9950x-vs-amd_ryzen_9_9950x3d"
+    },
+    {
+      "name": "AMD Ryzen 9 9950X3D",
+      "aliases": ["ryzen 9 9950x3d", "9950x3d", "amd ryzen 9 9950x3d"],
+      "class": "desktop",
+      "gb6_single": 3437,
+      "gb6_multi": 22115,
+      "source_url": "https://www.cpu-monkey.com/en/compare_cpu-amd_ryzen_9_9950x-vs-amd_ryzen_9_9950x3d"
+    },
+    {
+      "name": "AMD Ryzen 7 9800X3D",
+      "aliases": ["ryzen 7 9800x3d", "9800x3d", "amd ryzen 7 9800x3d"],
+      "class": "desktop",
+      "gb6_single": 3305,
+      "gb6_multi": 18221,
+      "source_url": "https://www.cpu-monkey.com/en/compare_cpu-amd_ryzen_7_9800x3d-vs-intel_core_ultra_9_285h"
+    }
+  ]
+}

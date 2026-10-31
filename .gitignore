@@ -1,0 +1,25 @@
+# Personal history and reports
+/sample-report/
+**/agent-speedup-report/
+*.jsonl
+*.jsonl.zst
+report.md
+report.html
+summary.json
+!docs/example/report.md
+!docs/example/report.html
+!docs/example/summary.json
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example
