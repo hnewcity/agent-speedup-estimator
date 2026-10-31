@@ -66,6 +66,44 @@ python -m pip install zstandard
 
 ## 安装为 Skill
 
+### 方式一：让 Agent 帮你安装
+
+把下面这段话直接复制给能操作终端和文件的 Codex、Claude Code 或其他编程 Agent：
+
+```text
+请帮我安装这个 Skill：https://github.com/hnewcity/agent-speedup-estimator 。根据 README，将完整的 skills/agent-speedup-estimator 文件夹（包括 scripts/ 和 data/）安装到我当前使用的编程 Agent 的用户级 skills 目录，保留已有的本地修改。安装后，在安装目录中用 Python 3.9+ 运行 scripts/agent_speedup.py --help 验证，并告诉我安装路径。
+```
+
+### 方式二：使用 curl 安装
+
+需要 `curl` 和 `tar`，无需安装 Git。下面的命令下载 `main` 分支源码包，只提取 Skill 文件夹。运行 Skill 仍需 Python 3.9+。重复安装会覆盖目标 Skill 文件夹中的同名文件，请先保留本地修改。
+
+**macOS / Linux**：默认安装到 Codex；安装到 Claude Code 时，将 `skill_dir` 改成 `"$HOME/.claude/skills"`。
+
+```bash
+skill_dir="$HOME/.agents/skills"
+mkdir -p "$skill_dir"
+curl -fsSL https://github.com/hnewcity/agent-speedup-estimator/archive/refs/heads/main.tar.gz |
+  tar -xz -C "$skill_dir" --strip-components=2 agent-speedup-estimator-main/skills/agent-speedup-estimator
+```
+
+**Windows PowerShell**：使用现代 Windows 自带的 `curl.exe` 和 `tar.exe`。安装到 Claude Code 时，将 `$skillDir` 改成 `"$HOME/.claude/skills"`。
+
+```powershell
+$skillDir = "$HOME/.agents/skills"
+$archive = [System.IO.Path]::GetTempFileName()
+curl.exe -fL https://github.com/hnewcity/agent-speedup-estimator/archive/refs/heads/main.tar.gz -o $archive
+if ($LASTEXITCODE -ne 0) { throw "Download failed" }
+New-Item -ItemType Directory -Force $skillDir | Out-Null
+tar.exe -xzf $archive -C $skillDir --strip-components=2 agent-speedup-estimator-main/skills/agent-speedup-estimator
+if ($LASTEXITCODE -ne 0) { throw "Extraction failed" }
+Remove-Item -LiteralPath $archive
+```
+
+安装后的文件夹为所选 skills 目录中的 `agent-speedup-estimator/`。可运行 `python /path/to/agent-speedup-estimator/scripts/agent_speedup.py --help` 验证，Windows 也可使用 `py -3`。
+
+### 方式三：从 Git 克隆目录手动复制
+
 将 [`skills/agent-speedup-estimator`](../skills/agent-speedup-estimator) **整个文件夹**复制到对应位置，保留 `scripts/` 和 `data/`：
 
 | Agent | 用户级目录 | 项目级目录 |

@@ -67,6 +67,44 @@ Unreadable compressed files are counted and reported. If no usable timing data i
 
 ## Install as a skill
 
+### Option 1: Ask your agent to install it
+
+Copy this prompt into Codex, Claude Code, or another coding agent with terminal and filesystem access:
+
+```text
+Install the agent-speedup-estimator skill from https://github.com/hnewcity/agent-speedup-estimator for the coding agent I am using. Follow the README and install the complete skills/agent-speedup-estimator folder, including scripts/ and data/, in my personal skills directory. Preserve any existing local edits. Verify the installation by running scripts/agent_speedup.py --help with Python 3.9+ from the installed folder, and tell me the installed path.
+```
+
+### Option 2: Install with curl
+
+Requires `curl` and `tar`; Git is not needed. These commands download the `main` source archive and extract only the skill folder. Running the skill requires Python 3.9+. Matching files in an existing installation will be overwritten, so preserve local edits first.
+
+**macOS / Linux** — the default destination below is Codex. For Claude Code, change `skill_dir` to `"$HOME/.claude/skills"`.
+
+```bash
+skill_dir="$HOME/.agents/skills"
+mkdir -p "$skill_dir"
+curl -fsSL https://github.com/hnewcity/agent-speedup-estimator/archive/refs/heads/main.tar.gz |
+  tar -xz -C "$skill_dir" --strip-components=2 agent-speedup-estimator-main/skills/agent-speedup-estimator
+```
+
+**Windows PowerShell** — uses `curl.exe` and `tar.exe`, included in modern Windows. For Claude Code, change `$skillDir` to `"$HOME/.claude/skills"`.
+
+```powershell
+$skillDir = "$HOME/.agents/skills"
+$archive = [System.IO.Path]::GetTempFileName()
+curl.exe -fL https://github.com/hnewcity/agent-speedup-estimator/archive/refs/heads/main.tar.gz -o $archive
+if ($LASTEXITCODE -ne 0) { throw "Download failed" }
+New-Item -ItemType Directory -Force $skillDir | Out-Null
+tar.exe -xzf $archive -C $skillDir --strip-components=2 agent-speedup-estimator-main/skills/agent-speedup-estimator
+if ($LASTEXITCODE -ne 0) { throw "Extraction failed" }
+Remove-Item -LiteralPath $archive
+```
+
+The installed folder is `agent-speedup-estimator/` inside your chosen skills directory. You can verify it by running `python /path/to/agent-speedup-estimator/scripts/agent_speedup.py --help` (or `py -3` on Windows).
+
+### Option 3: Copy from a Git clone
+
 Copy the entire [`skills/agent-speedup-estimator`](skills/agent-speedup-estimator) folder, including `scripts/` and `data/`, into your agent's skill directory.
 
 | Agent | Personal skill location |
