@@ -16,8 +16,8 @@
     "thread_exponent": 0.8,
     "uncertainty": 1.35,
     "note": {
-      "en": "No Geekbench 6 score is known for this CPU. The baseline is a rough estimate: the oldest low-power laptop chip in the score table (Core i5-8250U), with its multi-core score scaled by this computer's thread count.",
-      "zh": "这颗 CPU 没有已知的 Geekbench 6 分数。基准分数是粗略估算：取分数表里最老的低功耗笔记本芯片（Core i5-8250U），并按本机线程数缩放它的多核分数。"
+      "en": "No Geekbench 6 score is known for this CPU. The baseline is a rough estimate: the documented low-power laptop anchor (Core i5-8250U), with its multi-core score scaled by this computer's thread count.",
+      "zh": "这颗 CPU 没有已知的 Geekbench 6 分数。基准分数是粗略估算：取已记录的低功耗笔记本参考芯片（Core i5-8250U），并按本机线程数缩放它的多核分数。"
     }
   }
 }

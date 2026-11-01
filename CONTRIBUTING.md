@@ -17,7 +17,7 @@ Python 3.14 exercises standard-library Zstandard support. The analyzer itself ha
 
 - **Adapters:** return `SessionTiming` objects from a parser under `scripts/aspeed/adapters/`, wire discovery into the CLI, and include synthetic fixtures for the timing schema.
 - **Classification:** add a rule and a representative command test. Only allowlisted command families may reach report output.
-- **CPU data:** include a verifiable source URL and the exact chip variant. Do not put invented or extrapolated scores in `cpu_scores.json`; documented proxies belong in `proxies.json`.
+- **CPU data:** follow [the data maintenance workflow](docs/cpu-data.md). Include the exact configuration, stable ID, source URL, check date and benchmark version. Keep missing scores in the catalog without projections. Never mix Geekbench versions or treat Mac CPU-reference mappings as measured Mac results. Preserve [data attribution and licensing](skills/agent-speedup-estimator/data/SOURCES.md); documented baseline proxies belong in `proxies.json`.
 - **Sensitivity assumptions:** explain the workload evidence. CPU and disk shares must stay in `[0, 1]`, sum to at most 1 in every scenario, and include three scenarios plus a valid `mt` weight.
 - **Translations:** keep language navigation and CLI commands consistent across `README.md` and `docs/README.*.md`. README translations do not imply additional report languages.
 

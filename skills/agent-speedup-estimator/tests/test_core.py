@@ -19,7 +19,7 @@ from aspeed.classify import classify  # noqa: E402
 from aspeed.estimate import cpu_ratio, project, project_all, validate_sensitivity  # noqa: E402
 from aspeed.hardware import Hardware  # noqa: E402
 from aspeed.models import Event  # noqa: E402
-from aspeed.scores import estimate_from_specs, find_cpu, load_json, resolve_baseline  # noqa: E402
+from aspeed.scores import estimate_from_specs, filter_catalog, find_cpu, load_catalog, load_json, resolve_baseline  # noqa: E402
 
 SENTINEL = "SECRET_SENTINEL_42"
 
@@ -147,14 +147,23 @@ class ScoreTests(unittest.TestCase):
         self.cpus = load_json("cpu_scores.json")["cpus"]
 
     def test_suffix_does_not_match_base_chip(self):
-        self.assertEqual(find_cpu("Apple M4 Pro", self.cpus)["name"], "Apple M4 Pro")
-        self.assertEqual(find_cpu("Apple M4", self.cpus)["name"], "Apple M4")
+        self.assertIsNone(find_cpu("Apple M4 Pro", self.cpus))
+        self.assertIsNone(find_cpu("Apple M4 Ultra", self.cpus))
+        self.assertEqual(find_cpu("Apple M4 Pro (12-CPU 16-GPU)", self.cpus)["name"], "Apple M4 Pro (12-CPU 16-GPU)")
+        self.assertIsNone(find_cpu("Apple M6 (16-CPU)", self.cpus))
+        self.assertIsNone(find_cpu("Intel Core i7-4770Imaginary", self.cpus))
 
     def test_vendor_decoration_is_ignored(self):
         self.assertEqual(find_cpu("Intel(R) Core(TM) i5-1235U", self.cpus)["name"], "Intel Core i5-1235U")
 
     def test_unknown_cpu_with_stand_in(self):
-        cpu, source, note, unc = resolve_baseline("AMD Ryzen 5 3450U with Radeon Vega Mobile Gfx")
+        def without_measurement(name, data_dir=None):
+            data = load_json(name, data_dir)
+            if name == "cpu_scores.json":
+                data["cpus"] = [c for c in data["cpus"] if c["name"] != "AMD Ryzen 5 3450U"]
+            return data
+        with patch("aspeed.scores.load_json", side_effect=without_measurement):
+            cpu, source, note, unc = resolve_baseline("AMD Ryzen 5 3450U with Radeon Vega Mobile Gfx")
         self.assertEqual(cpu["name"], "Intel Core i5-8250U")
         self.assertEqual(source, "proxy")
         self.assertIn("stand-in", note)
@@ -312,7 +321,7 @@ class EndToEndPrivacyTests(unittest.TestCase):
             self.assertEqual(code, 0)
             self.assertNotIn(SENTINEL, printed.getvalue())
             names = sorted(p.name for p in out.iterdir())
-            self.assertEqual(names, ["report.html", "report.md", "summary.json"])
+            self.assertEqual(names, ["cpu-catalog.json", "report.html", "report.md", "summary.json"])
             for p in out.iterdir():
                 self.assertNotIn(SENTINEL, p.read_text(encoding="utf-8"), p.name)
             data = json.loads((out / "summary.json").read_text(encoding="utf-8"))
@@ -358,11 +367,83 @@ class NeverAskTests(unittest.TestCase):
         self.assertTrue(any("approximate" in n for n in data["notes"]))
         self.assertTrue(data["targets"])
 
-    def test_unknown_target_falls_back_to_tiers(self):
+    def test_unknown_target_fails_without_substitution(self):
         code, out = self.run_cli(["--current-cpu", "Apple M1", "--target", "Acme Imaginary 9000"])
+        self.assertEqual(code, 2)
+        self.assertFalse((out / "summary.json").exists())
+
+
+class CatalogTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.catalog = load_catalog()
+        cls.cpus = cls.catalog["cpus"]
+
+    def test_generations_and_platforms_are_present(self):
+        self.assertGreater(len(self.cpus), 1500)
+        for gen in range(4, 15):
+            self.assertTrue(filter_catalog(self.cpus, vendor="Intel", generation=f"Core {gen}th gen"))
+        for gen in ("Zen 1", "Zen+", "Zen 2", "Zen 3", "Zen 3+", "Zen 4", "Zen 5"):
+            self.assertTrue(filter_catalog(self.cpus, vendor="AMD", generation=gen), gen)
+        for gen in range(1, 7):
+            self.assertTrue(filter_catalog(self.cpus, vendor="Apple", generation=f"M{gen}"))
+        self.assertGreater(len(filter_catalog(self.cpus, vendor="Apple", generation="Intel Mac")), 80)
+        self.assertEqual(len({c["id"] for c in self.cpus}), len(self.cpus))
+
+    def test_scores_keep_version_and_identity(self):
+        scores = load_json("cpu_scores.json")["cpus"]
+        for c in scores:
+            self.assertEqual(c["benchmark"], "Geekbench 6")
+            self.assertGreater(c["gb6_single"], 0)
+            self.assertGreater(c["gb6_multi"], 0)
+            self.assertTrue(c["source_url"].startswith("https://"))
+            self.assertIn(c["id"], {r["id"] for r in self.cpus})
+        self.assertTrue(any(not c.get("gb6_single") for c in self.cpus))
+
+    def test_apple_core_counts_and_legacy_intel_numbers(self):
+        by_name = {c["name"]: c for c in self.cpus}
+        self.assertEqual(by_name["Apple M1 (8-CPU)"]["cpu_cores"], 8)
+        self.assertEqual(by_name["Apple M2 (8-CPU)"]["cpu_cores"], 8)
+        self.assertEqual(by_name["Apple M6 (12-CPU)"]["cpu_cores"], 12)
+        self.assertNotIn("Intel Core i7-950", by_name)
+        self.assertNotIn("Intel Core i3-530", by_name)
+        self.assertFalse(any(" processor " in c["name"] for c in self.cpus))
+
+    def test_curated_tiers_keep_exact_configurations(self):
+        targets, primary = cli.build_targets(cli.parse_args(["--target-set", "tiers"]), self.cpus, "en")
+        self.assertEqual(len(targets), 8)
+        self.assertEqual(targets[primary][1], "mainstream")
+
+    def test_all_scored_targets_are_default(self):
+        args = cli.parse_args([])
+        targets, primary = cli.build_targets(args, self.cpus, "en")
+        self.assertEqual({c["id"] for c, _, _ in targets}, {c["id"] for c in self.cpus if c.get("gb6_single")})
+        self.assertGreater(len(targets), 100)
+        self.assertLess(primary, len(targets))
+
+    def test_mac_reference_is_explicit_and_matches_cpu(self):
+        by_id = {c["id"]: c for c in self.cpus}
+        mapped = [c for c in self.cpus if c.get("cpu_reference_id")]
+        self.assertTrue(mapped)
+        for c in mapped:
+            self.assertEqual(c["score_status"], "cpu-reference-gb6")
+            cpu = by_id[c["cpu_reference_id"]]
+            self.assertEqual((c["gb6_single"], c["gb6_multi"]), (cpu["gb6_single"], cpu["gb6_multi"]))
+
+    def test_listing_needs_no_transcripts_or_hardware(self):
+        with patch.object(cli, "detect", side_effect=AssertionError("should not detect")), contextlib.redirect_stdout(io.StringIO()) as output:
+            code = cli.main(["--list-cpus", "--vendor", "Apple", "--generation", "M2", "--json"])
         self.assertEqual(code, 0)
-        data = json.loads((out / "summary.json").read_text(encoding="utf-8"))
-        self.assertGreater(len(data["targets"]), 1)
+        rows = json.loads(output.getvalue())["cpus"]
+        self.assertTrue(rows)
+        self.assertTrue(all(c["vendor"] == "Apple" and c["generation"] == "M2" for c in rows))
+
+    def test_missing_scores_do_not_create_projections(self):
+        missing = next(c for c in self.cpus if not c.get("gb6_single"))
+        with self.assertRaises(ValueError):
+            cli.build_targets(cli.parse_args(["--target", missing["name"]]), self.cpus, "en")
+        with self.assertRaises(ValueError):
+            cli.build_targets(cli.parse_args(["--search", "Imaginary-9000"]), self.cpus, "en")
 
 
 class SourceHygieneTests(unittest.TestCase):

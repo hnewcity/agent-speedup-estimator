@@ -31,7 +31,7 @@
 
 - モデル、ツール、人の応答、アイドル時間などの内訳。
 - ビルド、テスト、インストール、スクリプト、Git、ファイル操作の分類。
-- Geekbench 6 の参照値、4 つの標準クラス、独自スコアによる比較。
+- Geekbench 6 の参照値がある全モデルを既定で比較。短いクラス別比較や独自スコアも指定できます。
 - 全体とツールの速度比、および削減時間を 3 シナリオで表示。
 - Markdown、対話的なオフライン HTML、JSON の出力。
 - エージェント用スキルと Python CLI の両方に対応。
@@ -55,6 +55,7 @@ python skills/agent-speedup-estimator/scripts/agent_speedup.py --lang en --out .
 | `report.md` | 要約の確認 |
 | `report.html` | 比較対象、グラフ、表の切り替え。オフラインで利用可能 |
 | `summary.json` | 集計データの再利用 |
+| `cpu-catalog.json` | スコア未収録のモデルを含む CPU と Mac の全カタログ |
 
 圧縮された Codex 履歴（`.jsonl.zst`）には **Python 3.14+**、または旧バージョンで次の追加パッケージが必要です。
 
@@ -123,10 +124,10 @@ OS 別のコピーコマンドは[英語のインストール手順](../README.m
 
 ```bash
 # 過去 30 日間と指定 CPU
-python skills/agent-speedup-estimator/scripts/agent_speedup.py --days 30 --target "Apple M4 Pro" --lang en
+python skills/agent-speedup-estimator/scripts/agent_speedup.py --days 30 --target "Apple M4 Pro (14-CPU 20-GPU)" --lang en
 
 # 複数の CPU を比較
-python skills/agent-speedup-estimator/scripts/agent_speedup.py --target "Apple M4" --target "AMD Ryzen 9 9950X"
+python skills/agent-speedup-estimator/scripts/agent_speedup.py --target "Apple M4 (10-CPU)" --target "AMD Ryzen 9 9950X"
 
 # 独自スコア。数値は引数の説明用です
 python skills/agent-speedup-estimator/scripts/agent_speedup.py --current-gb6 1500 6000 --custom-target "My next computer" 3000 15000
@@ -137,7 +138,7 @@ python skills/agent-speedup-estimator/scripts/agent_speedup.py --help
 
 既定では `~/.claude/projects`、`~/.codex/sessions`、`~/.codex/archived_sessions` を読み、`CLAUDE_CONFIG_DIR` と `CODEX_HOME` を尊重します。`--agents`、`--current-disk`、`--target-disk`、`--sensitivity` などの詳細は[引数一覧](../README.md#more-examples)を参照してください。
 
-同じ出力先の同名ファイルは上書きされます。不明な CPU 名は警告され、指定した対象がすべて不明なら既定のクラスに戻ります。`--days` は記録・ターンの終了時刻で選び、期間境界をまたぐ処理を分割しません。
+同じ出力先の同名ファイルは上書きされます。不明・曖昧・スコア不足の対象は明示的なエラーとなり、別の対象に置き換えません。`--list-cpus` の正確な構成名または ID を指定してください。`--days` は記録・ターンの終了時刻で選び、期間境界をまたぐ処理を分割しません。
 
 ## 推定の仕組み
 
@@ -180,3 +181,13 @@ python examples/generate_demo.py
 分類、時間配分、圧縮、スコア、推定の境界、入力検証、両アダプターのプライバシーをテストします。GitHub Actions は Linux、Windows、macOS と Python 3.9 / 3.14 を使用します。変更や翻訳は [CONTRIBUTING.md](../CONTRIBUTING.md) を参照し、実際の会話ではなく人工データを使ってください。
 
 [MIT](../LICENSE) © 2026 hnewcity。OpenAI、Anthropic、Primate Labs とは無関係の独立したプロジェクトです。
+
+## CPU と Mac のカタログ
+
+[全モデル一覧](cpu-catalog.md) · [データと出典](cpu-data.md)
+
+Intel Core 第4世代から Core / Core Ultra Series 3、AMD Zen 系列、Apple M1–M6 の掲載構成と2013年以降の Intel / Apple Silicon Mac を収録しています。地域・OEM・カスタム構成には欠落があり得ます。掲載は発売や販売状況の独立した確認ではありません。
+
+既定では有効な Geekbench 6 の単一／複数コアの組を持つ全対象を比較します。HTML は検索、メーカー・世代・プラットフォームのフィルター、25件ずつのページ表示を備えます。スコア不足も一覧に残ります。Mac の CPU 参照値は実機の測定値とは区別され、Geekbench 6 と 7 は混在しません。
+
+`--list-cpus --search "M2" --json` で検索・書き出し、`--target-set tiers` で短い比較を選べます。派生カタログは [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) で提供します（コードは MIT）。

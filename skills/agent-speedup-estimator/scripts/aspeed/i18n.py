@@ -2,6 +2,14 @@ from __future__ import annotations
 
 STR = {
     "en": {
+        "search": "Search CPU or Mac configuration",
+        "mac_reference": "This Mac projection uses a reference score for its CPU configuration, not a measured score of this Mac. Cooling, power and memory can change the result.",
+        "all": "All", "vendor": "Vendor", "generation": "Generation", "platform": "Platform",
+        "data_status": "Data status", "source": "Source", "previous": "Previous", "next": "Next",
+        "page_count": "{first}–{last} of {total}", "choose_target": "Search and compare all targets",
+        "catalog_title": "CPU and Mac inventory",
+        "catalog_count": "{total} catalog entries · {scored} with GB6 references · {targets} comparisons · checked {date}",
+        "catalog_note": "The cited lists cover many generations and configurations; regional and OEM omissions may remain. A listing does not verify availability. Missing or version-conflicting scores are not used for projections. CPU reference scores are not measurements of each Mac.",
         "title": "Agent speedup estimate",
         "scanned": "Scanned",
         "sessions": "sessions",
@@ -89,7 +97,7 @@ STR = {
         "change": "Change",
         "model_row": "Model time (unchanged)",
         "total_row": "Agent working total",
-        "range_hint": "Line: conservative to optimistic. Dot: expected. Click a row or a button at the top to switch machines.",
+        "range_hint": "Line: conservative to optimistic. Dot: expected. Click a row to switch machines; use search and filters to find more.",
         "split_title": "Agent working time: model vs local tools",
         "per_cat_title": "What changes, by category",
         "not_work_title": "Time that is not agent work",
@@ -102,6 +110,14 @@ STR = {
         "multi_x": "Multi-core",
     },
     "zh": {
+        "search": "搜索 CPU 或 Mac 配置",
+        "mac_reference": "此 Mac 的估算采用对应 CPU 配置的参考分数，并非该机型的整机实测；散热、功耗与内存会影响实际结果。",
+        "all": "全部", "vendor": "厂商", "generation": "代际", "platform": "平台",
+        "data_status": "数据状态", "source": "来源", "previous": "上一页", "next": "下一页",
+        "page_count": "第 {first}–{last} 条，共 {total} 条", "choose_target": "搜索并比较全部目标",
+        "catalog_title": "CPU 与 Mac 型号目录",
+        "catalog_count": "目录 {total} 条 · 有 GB6 参考分数 {scored} 条 · 本报告对比 {targets} 条 · 核对日期 {date}",
+        "catalog_note": "目录覆盖来源中列出的多个代际和配置，地区与 OEM 型号仍可能有遗漏。收录不代表已核实上市或在售。缺少分数或版本冲突的条目不参与估算；CPU 参考分数不等于每款 Mac 的整机实测。",
         "title": "Agent 提速评估",
         "scanned": "已扫描",
         "sessions": "个会话",

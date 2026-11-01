@@ -92,6 +92,17 @@ def render_md(r: dict, lang: str) -> str:
         )
     L.append("")
 
+    if r.get("catalog"):
+        catalog = r["catalog"]
+        L.append(f"## {S['catalog_title']}")
+        L.append("")
+        L.append(S["catalog_count"].format(total=len(catalog["cpus"]), scored=sum(bool(c.get("gb6_single")) for c in catalog["cpus"]), targets=len(r["targets"]), date=catalog["as_of"]))
+        L.append("")
+        L.append(S["catalog_note"])
+        L.append("")
+        L.append("[" + S["catalog_title"] + "](cpu-catalog.json) · [HTML](report.html)")
+        L.append("")
+
     L.append(f"## {S['caveat_title']}")
     L.append("")
     for n in r["notes"]:

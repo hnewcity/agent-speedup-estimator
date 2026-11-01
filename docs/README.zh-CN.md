@@ -31,7 +31,7 @@
 
 - 模型、工具、人工回复、空闲等耗时的拆解。
 - 构建、测试、安装、脚本、Git、文件操作等工作负载分类。
-- 基于 Geekbench 6 参考分数的对比，支持四个默认档位和自定义目标。
+- 基于 Geekbench 6 参考分数的对比，默认覆盖全部有分数的型号，也支持精简档位和自定义目标。
 - 三种情形下的端到端提速、工具提速及预计节省时间。
 - Markdown 摘要、可交互的离线 HTML 报告和 JSON 数据。
 - Skill 和独立 Python 命令行两种用法。
@@ -55,6 +55,7 @@ Windows 找不到 `python` 时用 `py -3`；macOS/Linux 可用 `python3`。完�
 | `report.md` | 阅读结果摘要 |
 | `report.html` | 切换目标电脑、查看图表和表格，支持离线打开 |
 | `summary.json` | 在其他工具中复用汇总数据 |
+| `cpu-catalog.json` | 查看完整 CPU 与 Mac 目录，包括缺少分数的型号 |
 
 压缩的 Codex 历史（`.jsonl.zst`）需要 **Python 3.14+**，或在较早版本中安装可选依赖：
 
@@ -123,10 +124,10 @@ Remove-Item -LiteralPath $archive
 
 ```bash
 # 最近 30 天，比较指定 CPU
-python skills/agent-speedup-estimator/scripts/agent_speedup.py --days 30 --target "Apple M4 Pro" --lang zh
+python skills/agent-speedup-estimator/scripts/agent_speedup.py --days 30 --target "Apple M4 Pro (14-CPU 20-GPU)" --lang zh
 
 # 比较多个目标
-python skills/agent-speedup-estimator/scripts/agent_speedup.py --target "Apple M4" --target "AMD Ryzen 9 9950X" --lang zh
+python skills/agent-speedup-estimator/scripts/agent_speedup.py --target "Apple M4 (10-CPU)" --target "AMD Ryzen 9 9950X" --lang zh
 
 # 自定义 Geekbench 6 分数；这里的数字仅用于演示参数
 python skills/agent-speedup-estimator/scripts/agent_speedup.py --current-gb6 1500 6000 --custom-target "目标电脑" 3000 15000 --lang zh
@@ -138,7 +139,23 @@ python skills/agent-speedup-estimator/scripts/agent_speedup.py --help
 
 默认扫描 `~/.claude/projects`、`~/.codex/sessions` 和 `~/.codex/archived_sessions`，尊重 `CLAUDE_CONFIG_DIR`、`CODEX_HOME` 环境变量。可用 `--agents` 选择 Agent，用 `--current-disk` / `--target-disk` 指定磁盘类型，用 `--sensitivity` 加载自定义假设。完整参数见[英文参考](../README.md#more-examples)。
 
-同一输出目录中的同名报告会被覆盖。未知目标名称会产生提示；所有指定目标都未匹配时，使用默认档位。`--days` 按记录或轮次结束时间筛选，不会切开跨越边界的工作。
+同一输出目录中的同名报告会被覆盖。未知、规格不明确或缺少分数的目标会明确报错，不会悄悄替换成默认档位。请从 `--list-cpus` 选择完整配置名或 ID。`--days` 按记录或轮次结束时间筛选，不会切开跨越边界的工作。
+
+## CPU 与 Mac 覆盖范围
+
+[查看完整型号目录](cpu-catalog.md) · [数据范围与来源](cpu-data.md)
+
+目录覆盖 Intel 第 4 代 Core 到 Core / Core Ultra Series 3、AMD Zen 起的 Ryzen / PRO / Ryzen AI / Threadripper / EPYC 等系列，以及 Apple M1–M6 的来源所列芯片配置和 2013 年起的 Intel / Apple Silicon Mac。各代数量与全部型号见完整目录。收录并不等于已独立核实上市或在售；地区、OEM 和定制配置仍可能有遗漏。
+
+默认报告比较所有具有成对 Geekbench 6 分数的条目，支持搜索、厂商／代际／平台筛选，每页 25 条。目录同时展示缺少分数的型号。Apple 不同核心配置不会混用；Mac 若采用对应 CPU 的参考分数，会明确标注并非整机实测。Geekbench 6 和 7 不混算。
+
+```bash
+python skills/agent-speedup-estimator/scripts/agent_speedup.py --list-cpus --vendor Apple --generation M2
+python skills/agent-speedup-estimator/scripts/agent_speedup.py --list-cpus --search "Core i7-4" --json
+python skills/agent-speedup-estimator/scripts/agent_speedup.py --vendor AMD --generation "Zen 4" --lang zh
+```
+
+报告额外导出 `cpu-catalog.json`；`--target-set tiers` 可选择精简档位对比。
 
 ## 估算原理
 
@@ -156,7 +173,7 @@ CPU 速度比按类别权重混合单核和多核分数；磁盘使用启发式�
 
 ## 数据与限制
 
-[`data/`](../skills/agent-speedup-estimator/data) 包含分数来源、默认档位、替代芯片与三种情形的敏感度假设。
+[`data/`](../skills/agent-speedup-estimator/data) 包含完整型号目录、分数来源、可选档位、替代芯片与三种情形的敏感度假设。
 
 - 假设模型在远程、工具在本地运行；不建模本地大模型、远程构建、GPU 升级或内存不足。
 - 模型时间是从计时间隔推断的，可能混入网络和调度开销；审批等待也可能进入工具耗时。
@@ -180,4 +197,4 @@ python examples/generate_demo.py
 
 自动测试覆盖分类、计时、压缩、分数解析、估算边界、参数校验和两个适配器的隐私。GitHub Actions 在 Linux、Windows、macOS 上测试 Python 3.9 和 3.14。贡献代码、数据或翻译前请阅读 [CONTRIBUTING.md](../CONTRIBUTING.md)，使用合成数据复现问题。
 
-[MIT 许可证](../LICENSE) © 2026 hnewcity。本项目独立开发，与 OpenAI、Anthropic、Primate Labs 无隶属关系。
+代码采用 [MIT 许可证](../LICENSE)；派生型号目录采用 [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)，附[数据来源](../skills/agent-speedup-estimator/data/SOURCES.md)。© 2026 hnewcity。本项目独立开发，与 OpenAI、Anthropic、Primate Labs 无隶属关系。

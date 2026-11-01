@@ -32,9 +32,9 @@ For intuition: if a run spends 80 seconds on remote model work and 20 seconds on
 
 - **A time breakdown** across model work, tools, human replies, idle gaps and other recorded activity.
 - **Workload categories** for builds, tests, installs, scripts, Git, file operations and more.
-- **Hardware comparisons** using bundled Geekbench 6 reference scores, four default tiers, or custom scores.
+- **Hardware comparisons** using bundled Geekbench 6 reference scores, the full scored catalog, an optional tier preset, or custom scores.
 - **Three scenarios** with end-to-end speedup, tool speedup and estimated time saved.
-- **Three output files:** readable Markdown, an interactive offline HTML report, and structured JSON.
+- **Four output files:** readable Markdown, an interactive offline HTML report, structured results, and a JSON CPU catalog.
 - **Two ways to use it:** an agent skill or a standalone Python command.
 
 The analyzer makes no network requests and never executes commands from your transcripts. Basic use needs only the Python standard library. Report text supports **English and Simplified Chinese**; the language buttons above switch this README.
@@ -56,6 +56,7 @@ Use `py -3` on Windows or `python3` on macOS/Linux if `python` is unavailable. O
 | `report.md` | Read or review the summary |
 | `report.html` | Compare machines, inspect charts and switch to table views; no internet needed |
 | `summary.json` | Reuse the aggregate results in your own tools |
+| `cpu-catalog.json` | Inspect the full CPU and Mac inventory, including missing scores |
 
 Compressed Codex files (`.jsonl.zst`) require **Python 3.14+** or the optional `zstandard` package on older Python versions:
 
@@ -148,16 +149,32 @@ Or simply:
 
 The [skill instructions](skills/agent-speedup-estimator/SKILL.md) guide automatic input discovery, fallback scores and how to explain the result. If Codex does not pick up the installation, restart it.
 
+## CPU and Mac coverage
+
+[Browse the complete model list](docs/cpu-catalog.md) · [Scope, data states and sources](docs/cpu-data.md)
+
+The catalog spans Intel Core 4th generation through Core / Core Ultra Series 3, AMD Zen families from early Ryzen through current source-listed Ryzen AI, Threadripper and EPYC, and Apple M1–M6 chip configurations plus Intel/Silicon Macs from 2013 onward. Exact counts and per-generation tables are in the linked catalog. Source-listed models are not independent release or availability confirmations; OEM, regional and build-to-order omissions may remain.
+
+Reports now compare **all entries with usable Geekbench 6 reference pairs** by default. The offline HTML has search, vendor/generation/platform filters and 25-row pages, plus a separate inventory showing missing data. Apple CPU-core bins are distinct. Mac estimates using CPU references are explicitly labeled; they are not measured Mac scores. Geekbench 6 and 7 are never mixed.
+
+```bash
+python skills/agent-speedup-estimator/scripts/agent_speedup.py --list-cpus --vendor Apple --generation M2
+python skills/agent-speedup-estimator/scripts/agent_speedup.py --list-cpus --search "Core i7-4" --json
+python skills/agent-speedup-estimator/scripts/agent_speedup.py --vendor AMD --generation "Zen 4"
+```
+
+Each report also exports `cpu-catalog.json`. Use `--target-set tiers` for the small curated preset.
+
 ## More examples
 
 Run these commands from the repository root:
 
 ```bash
 # Last 30 days, with a named target
-python skills/agent-speedup-estimator/scripts/agent_speedup.py --days 30 --target "Apple M4 Pro" --lang en
+python skills/agent-speedup-estimator/scripts/agent_speedup.py --days 30 --target "Apple M4 Pro (14-CPU 20-GPU)" --lang en
 
 # Compare two targets
-python skills/agent-speedup-estimator/scripts/agent_speedup.py --target "Apple M4" --target "AMD Ryzen 9 9950X"
+python skills/agent-speedup-estimator/scripts/agent_speedup.py --target "Apple M4 (10-CPU)" --target "AMD Ryzen 9 9950X"
 
 # Your own Geekbench 6 scores; these numbers are illustrative inputs
 python skills/agent-speedup-estimator/scripts/agent_speedup.py --current-gb6 1500 6000 --custom-target "My next computer" 3000 15000
@@ -178,7 +195,11 @@ python skills/agent-speedup-estimator/scripts/agent_speedup.py --help
 | `--agents claude,codex` | Choose agent histories |
 | `--claude-dir`, `--codex-dir` | Override transcript roots |
 | `--days N` | Include records/turns ending in the last N days; boundary-spanning work is not clipped |
-| `--target NAME` | Compare a bundled CPU; repeatable |
+| `--target NAME` | Compare an exact scored CPU/Mac configuration or catalog ID; repeatable |
+| `--target-set all\|tiers` | All scored entries by default; optional curated tiers |
+| `--list-cpus` | List every catalog entry, including missing scores; no transcripts required |
+| `--search TEXT`, `--vendor`, `--generation`, `--platform` | Filter the inventory or default report comparisons |
+| `--scored-only` | Limit the CPU listing to entries with paired GB6 scores |
 | `--custom-target NAME SINGLE MULTI` | Add a target using positive Geekbench 6 scores |
 | `--current-cpu`, `--current-gb6 SINGLE MULTI` | Override the CPU name or baseline scores |
 | `--current-disk`, `--target-disk` | Set `hdd`, `sata`, `nvme`, `nvme_gen4` or `unknown` |
@@ -188,7 +209,7 @@ python skills/agent-speedup-estimator/scripts/agent_speedup.py --help
 | `--lang auto\|en\|zh` | Choose the report language |
 | `--out DIR`, `--no-html`, `--json` | Set output directory, skip HTML, or print JSON |
 
-Default input roots are `~/.claude/projects`, `~/.codex/sessions` and `~/.codex/archived_sessions`; `CLAUDE_CONFIG_DIR` and `CODEX_HOME` are respected. Reports overwrite files of the same name in `--out`. Unknown named targets produce a warning; if none match, the default tiers are used.
+Default input roots are `~/.claude/projects`, `~/.codex/sessions` and `~/.codex/archived_sessions`; `CLAUDE_CONFIG_DIR` and `CODEX_HOME` are respected. Reports overwrite files of the same name in `--out`. Unknown, ambiguous or unscored named targets exit with an explanation; they are never silently replaced. Use an exact configuration name or ID from `--list-cpus`.
 
 ## How it works
 
@@ -215,6 +236,7 @@ Each CPU/disk share is between 0 and 1, and their sum cannot exceed 1. The basel
 
 | Data | Contents |
 | --- | --- |
+| [`cpu_catalog.json`](skills/agent-speedup-estimator/data/cpu_catalog.json) | Source-listed CPU and Mac configurations, including missing-score entries |
 | [`cpu_scores.json`](skills/agent-speedup-estimator/data/cpu_scores.json) | Dated reference scores and a source URL for each CPU |
 | [`tiers.json`](skills/agent-speedup-estimator/data/tiers.json) | Entry, mainstream, performance and workstation comparisons |
 | [`proxies.json`](skills/agent-speedup-estimator/data/proxies.json) | Stand-ins and the thread-count fallback |
@@ -248,4 +270,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for adapters, data updates and translatio
 
 ## License
 
-[MIT](LICENSE) © 2026 hnewcity. Independent community project; not affiliated with OpenAI, Anthropic or Primate Labs. Product names belong to their respective owners.
+Code: [MIT](LICENSE). Derived CPU catalog: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), with [source attribution](skills/agent-speedup-estimator/data/SOURCES.md). © 2026 hnewcity. Independent community project; not affiliated with OpenAI, Anthropic or Primate Labs. Product names belong to their respective owners.

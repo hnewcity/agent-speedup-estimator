@@ -124,6 +124,12 @@ h3 { font-size: 24px; line-height: 1.3; letter-spacing: -0.02em; font-weight: 50
 .axis-track { position: relative; height: 18px; }
 .tick { position: absolute; transform: translateX(-50%); font-size: 11px; color: var(--stone); font-variant-numeric: tabular-nums; }
 .hint { color: var(--stone); font-size: 13px; margin: 16px 0 0; }
+.filters, .pager { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 16px 0; }
+.filters label { display: flex; flex-direction: column; font-size: 12px; color: var(--muted); gap: 4px; }
+.filters input, .filters select { font: inherit; font-size: 14px; color: var(--ink); background: var(--card); border: 1px solid var(--axis); border-radius: 8px; padding: 10px; max-width: 100%; }
+.filters input { min-width: 250px; }
+.pager button:disabled { opacity: .4; cursor: default; }
+a { color: inherit; }
 
 .tbl-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -360,15 +366,16 @@ _JS = r"""
     return table([S.cat, S.count, S.time, S.share, S.median, S.p90, S.longest], rows, ['l', 'r', 'r', 'r', 'r', 'r', 'r']);
   }
 
-  var projRows = [], chips = [];
+  var projRows = [];
   function select(i) {
     sel = i;
-    projRows.forEach(function (b, j) { b.setAttribute('aria-pressed', String(j === i)); });
-    chips.forEach(function (b, j) { b.setAttribute('aria-pressed', String(j === i)); });
+    projRows.forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.index === i)); });
     renderHero(); renderPerCat();
   }
-  function projChart() {
-    var wrap = el('div'), gs = targets.map(range);
+  function projChart(indices) {
+    projRows = [];
+    var wrap = el('div'), gs = indices.map(function (i) { return range(targets[i]); });
+    if (!gs.length) return wrap;
     var lo = Math.min(1, Math.min.apply(null, gs.map(function (g) { return g.lo; })));
     var hi = Math.max(lo + 0.1, Math.max.apply(null, gs.map(function (g) { return g.hi; })));
     var span = hi - lo, step = 5;
@@ -381,8 +388,8 @@ _JS = r"""
     axis.appendChild(el('div'));
     ticks.forEach(function (tv) { var tk = el('span', 'tick', tv + 'x'); tk.style.left = pos(tv) + '%'; at.appendChild(tk); });
     axis.appendChild(at); axis.appendChild(el('div')); wrap.appendChild(axis);
-    targets.forEach(function (t, i) {
-      var g = gs[i], b = el('button', 'prow'); b.type = 'button'; b.setAttribute('aria-pressed', String(i === sel));
+    indices.forEach(function (i, pageIndex) {
+      var t = targets[i], g = gs[pageIndex], b = el('button', 'prow'); b.type = 'button'; b.dataset.index = i; b.setAttribute('aria-pressed', String(i === sel));
       var l = el('div', 'row-l'); l.appendChild(el('span', 'nm', t.name)); l.appendChild(el('span', 'tier', t.tier));
       var track = el('div', 'track rtrack');
       ticks.forEach(function (tv) { var gl = el('span', 'gl' + (Math.abs(tv - 1) < 1e-6 ? ' base' : '')); gl.style.left = pos(tv) + '%'; track.appendChild(gl); });
@@ -404,12 +411,58 @@ _JS = r"""
     wrap.appendChild(el('p', 'hint', S.range_hint));
     return wrap;
   }
-  function projTable() {
-    var rows = targets.map(function (t) {
+  function projTable(indices) {
+    var rows = indices.map(function (i) {
+      var t = targets[i];
       var g = range(t), e = t.scenarios.expected;
       return [t.name, t.tier, x2(t.cpu_x_single), x2(t.cpu_x_multi), x2(e.tool_speedup), x2(g.lo), x2(g.ex), x2(g.hi), dur(e.saved_s)];
     });
-    return table([S.target, S.tier, S.single_x, S.multi_x, S.tool_speedup, S.cons, S.exp, S.opt, S.saved], rows, ['l', 'l', 'r', 'r', 'r', 'r', 'r', 'r', 'r']);
+    var result = table([S.target, S.tier, S.single_x, S.multi_x, S.tool_speedup, S.cons, S.exp, S.opt, S.saved], rows, ['l', 'l', 'r', 'r', 'r', 'r', 'r', 'r', 'r']);
+    result.querySelectorAll('tbody tr').forEach(function (row, j) {
+      var cell = row.firstChild, button = el('button', 'chip', targets[indices[j]].name);
+      button.type = 'button'; button.addEventListener('click', function () { select(indices[j]); });
+      cell.replaceChildren(button);
+    });
+    return result;
+  }
+
+  function browser(records, renderPage, prefix) {
+    var root = el('div'), controls = el('div', 'filters'), body = el('div'), pager = el('div', 'pager');
+    var search = el('input'), page = 0, size = 25, filters = [];
+    search.type = 'search'; search.placeholder = S.search;
+    function label(text, field) { var l = el('label', null, text); l.appendChild(field); controls.appendChild(l); }
+    label(prefix + ' · ' + S.search, search);
+    function filter(labelText, key) {
+      var field = el('select'), values = new Set();
+      records.forEach(function (r) { [].concat(r[key] || []).forEach(function (v) { values.add(v); }); });
+      field.appendChild(el('option', null, S.all)); field.firstChild.value = '';
+      Array.from(values).sort().forEach(function (v) { var o = el('option', null, v); o.value = v; field.appendChild(o); });
+      label(labelText, field); filters.push({ field: field, key: key });
+      field.addEventListener('change', function () { page = 0; draw(); });
+    }
+    filter(S.vendor, 'vendor'); filter(S.generation, 'generation'); filter(S.platform, 'platforms');
+    if (records.some(function (r) { return r.score_status; })) filter(S.data_status, 'score_status');
+    var prev = el('button', 'toggle', S.previous), next = el('button', 'toggle', S.next), count = el('span', 'hint');
+    prev.type = next.type = 'button'; count.setAttribute('aria-live', 'polite');
+    prev.addEventListener('click', function () { page--; draw(); });
+    next.addEventListener('click', function () { page++; draw(); });
+    search.addEventListener('input', function () { page = 0; draw(); });
+    pager.appendChild(prev); pager.appendChild(count); pager.appendChild(next);
+    root.appendChild(controls); root.appendChild(pager); root.appendChild(body);
+    function draw() {
+      var words = search.value.toLowerCase().trim().split(/\s+/).filter(Boolean), matches = [];
+      records.forEach(function (r, i) {
+        var text = [r.name, r.generation, r.source_section || ''].join(' ').toLowerCase();
+        if (words.every(function (w) { return text.includes(w); }) && filters.every(function (f) {
+          return !f.field.value || [].concat(r[f.key] || []).includes(f.field.value);
+        })) matches.push(i);
+      });
+      var start = page * size;
+      prev.disabled = page === 0; next.disabled = start + size >= matches.length;
+      count.textContent = fmt(S.page_count, { first: matches.length ? start + 1 : 0, last: Math.min(start + size, matches.length), total: matches.length });
+      body.replaceChildren(renderPage(matches.slice(start, start + size)));
+    }
+    draw(); return root;
   }
 
   var perTitle, perBox;
@@ -422,6 +475,7 @@ _JS = r"""
     rows.forEach(function (r) { body.push([CN[r.k] || r.k, dur(r.o), dur(r.n), chg(r.o, r.n)]); });
     body.push([S.total_row, dur(e.total_old_s), dur(e.total_new_s), chg(e.total_old_s, e.total_new_s)]);
     perBox.replaceChildren(table([S.cat, S.before, S.after, S.change], body, ['l', 'r', 'r', 'r'], true));
+    if (t.score_status === 'cpu-reference-gb6') perBox.appendChild(el('p', 'hint', S.mac_reference));
   }
   function renderHero() {
     var t = targets[sel], g = range(t), e = t.scenarios.expected;
@@ -437,11 +491,7 @@ _JS = r"""
   $('#pill').textContent = fmt(S.pill, { n: all.sessions, a: R.period.first, b: R.period.last });
 
   var sw = $('#switch');
-  targets.forEach(function (t, i) {
-    var c = el('button', 'chip', t.name); c.type = 'button'; c.setAttribute('aria-pressed', String(i === sel));
-    c.addEventListener('click', function () { select(i); });
-    chips.push(c); sw.appendChild(c);
-  });
+  var choose = el('a', 'chip', S.choose_target); choose.href = '#comparisons'; sw.appendChild(choose);
 
   var stats = $('#stats');
   function stat(v, l) { var d = el('div'); d.appendChild(el('div', 'stat-v', v)); d.appendChild(el('div', 'stat-l', l)); stats.appendChild(d); }
@@ -452,15 +502,40 @@ _JS = r"""
   var app = $('#app');
 
   var p = section(S.proj_title, S.e2e_note);
-  var pc = card(null, null), pChart = projChart(), pTbl = projTable();
-  withToggle(pc.head, pChart, pTbl);
-  pc.root.appendChild(pChart); pc.root.appendChild(pTbl);
+  p.root.id = 'comparisons';
+  var pc = card(null, null), tableMode = false, projectionBody;
+  var view = el('button', 'toggle', S.table_view); view.type = 'button'; view.setAttribute('aria-pressed', 'false');
+  pc.head.appendChild(view);
+  pc.root.appendChild(browser(targets, function (indices) {
+    projectionBody = el('div'); projectionBody.appendChild(projChart(indices)); projectionBody.appendChild(projTable(indices));
+    projectionBody.children[0].hidden = tableMode; projectionBody.children[1].hidden = !tableMode;
+    return projectionBody;
+  }, S.proj_title));
+  view.addEventListener('click', function () {
+    tableMode = !tableMode; view.textContent = tableMode ? S.chart_view : S.table_view; view.setAttribute('aria-pressed', String(tableMode));
+    projectionBody.children[0].hidden = tableMode; projectionBody.children[1].hidden = !tableMode;
+  });
   p.root.appendChild(pc.root);
   var per = card(' ', null); perTitle = per.root.querySelector('h3');
   perBox = el('div'); per.root.appendChild(perBox);
   per.root.style.marginTop = '16px';
   p.root.appendChild(per.root);
   app.appendChild(p.root);
+
+  if (R.catalog) {
+    var inventory = R.catalog.cpus, cat = section(S.catalog_title, S.catalog_note), catCard = card(null, null);
+    catCard.root.appendChild(el('p', 'card-sub', fmt(S.catalog_count, { total: inventory.length, scored: inventory.filter(function (c) { return c.gb6_single; }).length, targets: targets.length, date: R.catalog.as_of })));
+    catCard.root.appendChild(browser(inventory, function (indices) {
+      var rows = indices.map(function (i) { var c = inventory[i]; return [c.name, c.generation, (c.platforms || []).join(', '), c.score_status, c.gb6_single ? c.gb6_single + ' / ' + c.gb6_multi : '—', '']; });
+      var result = table([S.target, S.generation, S.platform, S.data_status, 'Geekbench 6', S.source], rows, ['l','l','l','l','r','l']);
+      result.querySelectorAll('tbody tr').forEach(function (row, j) {
+        var c = inventory[indices[j]], url = c.source_url || (c.source_urls || [])[0];
+        if (url && /^https:\/\//.test(url)) { var link = el('a', null, S.source); link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer'; row.lastChild.appendChild(link); }
+      });
+      return result;
+    }, S.catalog_title));
+    cat.root.appendChild(catCard.root); app.appendChild(cat.root);
+  }
 
   var w = section(S.time_title, S.model_note);
   var sc = card(S.split_title, null), sChart = splitChart(), sTbl = splitTable();

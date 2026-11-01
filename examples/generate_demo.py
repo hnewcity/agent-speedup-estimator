@@ -64,7 +64,7 @@ def generate():
         with patch.object(cli, "detect", return_value=hardware), contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
             code = cli.main([
                 "--agents", "claude,codex", "--claude-dir", str(claude), "--codex-dir", str(codex),
-                "--current-gb6", "1500", "6000", "--custom-target", "Demo target (synthetic)", "3000", "15000",
+                "--current-gb6", "1500", "6000",
                 "--lang", "en", "--out", str(out),
             ])
         if code:
@@ -73,12 +73,12 @@ def generate():
     data = json.loads((out / "summary.json").read_text(encoding="utf-8"))
     data["demo"] = True
     data["baseline"]["note"] = "Fictional scores for illustration only"
-    data["notes"].insert(0, "SYNTHETIC EXAMPLE: all timings, hardware and scores are fictional. This is not a measured result or a real user's history.")
+    data["notes"].insert(0, "SYNTHETIC EXAMPLE: activity, baseline hardware and baseline scores are fictional. Target CPU references come from the attributed public dataset. These projections are not measured results or a real user's history.")
     (out / "summary.json").write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (out / "report.md").write_text(
-        "> Synthetic example — fictional timings, hardware and scores.\n\n" + render_md(data, "en"), encoding="utf-8")
+        "> Synthetic example — fictional activity and baseline; sourced target CPU references.\n\n" + render_md(data, "en"), encoding="utf-8")
     (out / "report.html").write_text(render_html(data, "en"), encoding="utf-8")
-    print("Generated docs/example/report.md, report.html and summary.json from synthetic inputs.")
+    print("Generated docs/example/report.md, report.html, summary.json and cpu-catalog.json from synthetic activity and baseline inputs.")
 
 
 if __name__ == "__main__":

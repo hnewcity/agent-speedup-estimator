@@ -1,5 +1,6 @@
 # Personal history and reports
 /sample-report/
+/research/
 **/agent-speedup-report/
 *.jsonl
 *.jsonl.zst

@@ -18,7 +18,7 @@ from .hardware import detect
 from .i18n import CAT, dur, strings
 from .report_html import render_html
 from .report_md import render_md
-from .scores import estimate_from_specs, find_cpu, load_json, resolve_baseline
+from .scores import estimate_from_specs, filter_catalog, find_cpu, load_catalog, load_json, resolve_baseline
 from .textio import UnsupportedCompression
 
 
@@ -61,6 +61,12 @@ def parse_args(argv: Optional[List[str]]) -> argparse.Namespace:
     p.add_argument("--no-html", action="store_true")
     p.add_argument("--json", action="store_true", help="print the JSON result instead of the Markdown summary")
     p.add_argument("--list-cpus", action="store_true")
+    p.add_argument("--search", default="", help="search CPU and Mac inventory; also filter default comparisons")
+    p.add_argument("--vendor", choices=["Intel", "AMD", "Apple"], default="")
+    p.add_argument("--platform", choices=["desktop", "laptop", "workstation", "server", "embedded", "handheld", "apple-silicon"], default="")
+    p.add_argument("--generation", default="", help="generation substring, e.g. 'Core 4th', 'Zen 4', 'M2'")
+    p.add_argument("--scored-only", action="store_true", help="list only entries with paired Geekbench 6 scores")
+    p.add_argument("--target-set", choices=["all", "tiers"], default="all", help="default: all scored CPUs; tiers selects the small curated comparison")
     args = p.parse_args(argv)
     for name in ("days", "cap", "max_stall", "max_human"):
         value = getattr(args, name)
@@ -141,26 +147,37 @@ def build_targets(args: argparse.Namespace, cpus: List[dict], lang: str):
     found = []
     for name in args.target:
         cpu = find_cpu(name, cpus)
-        if cpu:
+        if cpu and cpu.get("gb6_single") and cpu.get("gb6_multi"):
             found.append((cpu, "custom", custom))
         else:
-            print(f"warning: '{name}' is not in the score table; use --custom-target NAME SINGLE MULTI", file=sys.stderr)
+            reason = "has no paired Geekbench 6 scores" if cpu else "is unknown or needs a more specific configuration"
+            raise ValueError(f"'{name}' {reason}. Use --list-cpus --search to inspect the inventory, or --custom-target NAME SINGLE MULTI with verified Geekbench 6 scores.")
     for name, single, multi in args.custom_target:
         try:
             found.append(({"name": name, "gb6_single": int(single), "gb6_multi": int(multi)}, "custom", custom))
         except ValueError:
             print(f"warning: scores for '{name}' must be whole numbers", file=sys.stderr)
     if found:
-        return found, 0
+        return list({x[0]["name"]: x for x in found}.values()), 0
+    if args.target_set == "all":
+        selected = filter_catalog(cpus, args.search, args.vendor, args.platform, args.generation, True)
+        selected.sort(key=lambda c: (-c["gb6_multi"], c["name"]))
+        found = [(c, c.get("platforms", ["cpu"])[0], c.get("generation", custom)) for c in selected]
+        if not found:
+            raise ValueError("No scored CPUs match these filters. Use --list-cpus to inspect missing-score entries.")
+        primary = next((i for i, c in enumerate(selected) if c["name"] == "Intel Core Ultra 7 255H"), 0)
+        return found, primary
     tiers = load_json("tiers.json")
     primary = 0
     for t in tiers["tiers"]:
         for cname in t["cpus"]:
             cpu = find_cpu(cname, cpus)
-            if cpu:
+            if cpu and cpu.get("gb6_single") and filter_catalog([cpu], args.search, args.vendor, args.platform, args.generation):
                 if t["id"] == tiers.get("primary_tier") and primary == 0 and not any(x[1] == t["id"] for x in found):
                     primary = len(found)
                 found.append((cpu, t["id"], t.get("label_" + lang) or t["label"]))
+    if not found:
+        raise ValueError("No scored CPUs match the selected tiers and filters.")
     return found, primary
 
 
@@ -196,13 +213,25 @@ def main(argv: Optional[List[str]] = None) -> int:
         except Exception:
             pass
     args = parse_args(argv)
-    cpus = load_json("cpu_scores.json")["cpus"]
+    catalog = load_catalog()
+    cpus = catalog["cpus"]
     if args.list_cpus:
-        for c in sorted(cpus, key=lambda x: x["gb6_multi"]):
-            print(f"{c['name']:<28} single {c['gb6_single']:>5}  multi {c['gb6_multi']:>6}")
+        selected = filter_catalog(cpus, args.search, args.vendor, args.platform, args.generation, args.scored_only)
+        if args.json:
+            print(json.dumps({**catalog, "cpus": selected}, ensure_ascii=False, indent=2))
+        else:
+            for c in selected:
+                score = f"GB6 {c['gb6_single']} / {c['gb6_multi']}" if c.get("gb6_single") else c["score_status"]
+                print(f"{c['name']} | {c['generation']} | {', '.join(c['platforms'])} | {score}")
+            print(f"\n{len(selected)} entries; {sum(bool(c.get('gb6_single')) for c in selected)} with paired Geekbench 6 reference scores.")
         return 0
 
     lang = detect_lang() if args.lang == "auto" else args.lang
+    try:
+        targets_in, primary = build_targets(args, cpus, lang)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     try:
         if args.sensitivity:
             with open(args.sensitivity, encoding="utf-8") as fh:
@@ -257,12 +286,19 @@ def main(argv: Optional[List[str]] = None) -> int:
             base = {"name": strings(lang)["est_as"].format(cpu=hw.cpu_name or "?"), **est}
 
     s_disk = disk_ratio(hw.disk_class, args.target_disk)
-    targets_in, primary = build_targets(args, cpus, lang)
     targets = []
     for cpu, tier_id, tier_label in targets_in:
         targets.append(
             {
                 "name": cpu["name"],
+                "id": cpu.get("id", cpu["name"]),
+                "vendor": cpu.get("vendor", "Custom"),
+                "generation": cpu.get("generation", "Custom"),
+                "platforms": cpu.get("platforms", []),
+                "source_url": cpu.get("source_url", ""),
+                "score_status": cpu.get("score_status", "user-provided"),
+                "score_note": cpu.get("score_note", ""),
+                "benchmark": "Geekbench 6",
                 "tier_id": tier_id,
                 "tier": tier_label,
                 "gb6_single": cpu["gb6_single"],
@@ -284,6 +320,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         "agents": {**{k: agent_dict(v) for k, v in aggs.items()}, "all": agent_dict(total)},
         "sensitive_expected_s": round(sensitive_expected_s(total, sens), 1),
         "targets": targets,
+        "catalog": catalog,
         "primary": primary,
         "cat_names": CAT.get(lang, CAT["en"]),
     }
@@ -294,7 +331,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     md = render_md(r, lang)
     (out / "report.md").write_text(md, encoding="utf-8")
     (out / "summary.json").write_text(json.dumps(r, ensure_ascii=False, indent=2), encoding="utf-8")
-    written = [out / "report.md", out / "summary.json"]
+    (out / "cpu-catalog.json").write_text(json.dumps(catalog, ensure_ascii=False, indent=2), encoding="utf-8")
+    written = [out / "report.md", out / "summary.json", out / "cpu-catalog.json"]
     if not args.no_html:
         (out / "report.html").write_text(render_html(r, lang), encoding="utf-8")
         written.append(out / "report.html")

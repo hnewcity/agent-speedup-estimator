@@ -31,7 +31,7 @@ Por ejemplo, si una tarea dedica 80 segundos al modelo remoto y 20 a herramienta
 
 - Desglose de tiempo del modelo, herramientas, respuestas humanas, inactividad y otras actividades.
 - Clasificación de compilaciones, pruebas, instalaciones, scripts, Git y operaciones con archivos.
-- Comparaciones con puntuaciones de referencia de Geekbench 6, cuatro gamas predeterminadas o valores propios.
+- Comparaciones con puntuaciones de referencia de Geekbench 6, todo el catálogo con puntuaciones, gamas opcionales o valores propios.
 - Aceleración total, aceleración de herramientas y ahorro estimado en tres escenarios.
 - Informes en Markdown, HTML interactivo sin conexión y JSON.
 - Uso como skill de un agente o como comando de Python.
@@ -55,6 +55,7 @@ Si `python` no está disponible, usa `py -3` en Windows o `python3` en macOS/Lin
 | `report.md` | Leer el resumen |
 | `report.html` | Cambiar de ordenador, consultar gráficos y tablas sin conexión |
 | `summary.json` | Reutilizar los datos agregados |
+| `cpu-catalog.json` | Consultar todo el catálogo de CPU y Mac, incluidos modelos sin puntuaciones |
 
 Los archivos comprimidos de Codex (`.jsonl.zst`) necesitan **Python 3.14+** o este paquete opcional en versiones anteriores:
 
@@ -123,10 +124,10 @@ Ejecuta los comandos desde la raíz del repositorio:
 
 ```bash
 # Últimos 30 días y una CPU concreta
-python skills/agent-speedup-estimator/scripts/agent_speedup.py --days 30 --target "Apple M4 Pro" --lang en
+python skills/agent-speedup-estimator/scripts/agent_speedup.py --days 30 --target "Apple M4 Pro (14-CPU 20-GPU)" --lang en
 
 # Varios objetivos
-python skills/agent-speedup-estimator/scripts/agent_speedup.py --target "Apple M4" --target "AMD Ryzen 9 9950X"
+python skills/agent-speedup-estimator/scripts/agent_speedup.py --target "Apple M4 (10-CPU)" --target "AMD Ryzen 9 9950X"
 
 # Puntuaciones propias; estos números solo ilustran los argumentos
 python skills/agent-speedup-estimator/scripts/agent_speedup.py --current-gb6 1500 6000 --custom-target "Mi próximo ordenador" 3000 15000
@@ -137,7 +138,7 @@ python skills/agent-speedup-estimator/scripts/agent_speedup.py --help
 
 Se buscan registros en `~/.claude/projects`, `~/.codex/sessions` y `~/.codex/archived_sessions`, respetando `CLAUDE_CONFIG_DIR` y `CODEX_HOME`. Usa `--agents` para elegir agentes, `--current-disk` / `--target-disk` para el disco y `--sensitivity` para tus supuestos. Consulta la [lista completa de opciones](../README.md#more-examples).
 
-Se sobrescriben los informes del mismo nombre en la carpeta de salida. Un objetivo desconocido genera un aviso; si ninguno coincide, se usan las gamas predeterminadas. `--days` selecciona por la fecha de finalización del registro o turno y no recorta tareas que cruzan el límite del período.
+Se sobrescriben los informes del mismo nombre en la carpeta de salida. Los objetivos desconocidos, ambiguos o sin puntuaciones producen un error explícito; nunca se sustituyen silenciosamente. Usa el nombre exacto de configuración o el ID de `--list-cpus`. `--days` selecciona por la fecha de finalización del registro o turno y no recorta tareas que cruzan el límite del período.
 
 ## Cómo funciona
 
@@ -180,3 +181,13 @@ python examples/generate_demo.py
 Las pruebas cubren clasificación, atribución, compresión, puntuaciones, límites, validación y privacidad en ambos adaptadores. GitHub Actions utiliza Linux, Windows y macOS con Python 3.9 y 3.14. Lee [CONTRIBUTING.md](../CONTRIBUTING.md) para contribuir código, datos o traducciones, siempre con ejemplos sintéticos.
 
 [MIT](../LICENSE) © 2026 hnewcity. Proyecto independiente, sin afiliación con OpenAI, Anthropic ni Primate Labs.
+
+## Catálogo de CPU y Mac
+
+[Lista completa de modelos](cpu-catalog.md) · [Datos y fuentes](cpu-data.md)
+
+Incluye Intel Core desde la cuarta generación hasta Core / Core Ultra Series 3, familias AMD Zen y configuraciones Apple M1–M6 de las fuentes, además de Mac Intel y Apple Silicon desde 2013. Puede haber omisiones regionales, OEM o de configuraciones a medida. La inclusión no confirma de forma independiente el lanzamiento ni la disponibilidad.
+
+El informe predeterminado compara todas las entradas con pares válidos de Geekbench 6. El HTML permite buscar y filtrar por fabricante, generación y plataforma, con páginas de 25 filas. Los modelos sin puntuaciones siguen visibles. Las estimaciones de Mac basadas en una referencia de CPU se distinguen de mediciones del Mac; nunca se mezclan Geekbench 6 y 7.
+
+Usa `--list-cpus --search "M2" --json` para buscar y exportar, o `--target-set tiers` para una comparación breve. El catálogo derivado se distribuye bajo [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/); el código sigue bajo MIT.
